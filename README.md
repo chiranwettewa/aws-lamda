@@ -1,82 +1,259 @@
-# aws-lamda serverless API
-The aws-lamda project, created with [`aws-serverless-java-container`](https://github.com/aws/serverless-java-container).
+# Podiweda Backend - Spring Boot with AWS Cognito
 
-The starter project defines a simple `/ping` resource that can accept `GET` requests with its tests.
+Secure REST API with AWS Cognito JWT authentication and role-based access control.
 
-The project folder also includes a `template.yml` file. You can use this [SAM](https://github.com/awslabs/serverless-application-model) file to deploy the project to AWS Lambda and Amazon API Gateway or test in local with the [SAM CLI](https://github.com/awslabs/aws-sam-cli). 
+## Features
 
-## Pre-requisites
-* [AWS CLI](https://aws.amazon.com/cli/)
-* [SAM CLI](https://github.com/awslabs/aws-sam-cli)
-* [Gradle](https://gradle.org/) or [Maven](https://maven.apache.org/)
+- ✅ JWT token validation using AWS Cognito
+- ✅ Spring Security OAuth2 Resource Server
+- ✅ Role-based access control (RBAC)
+- ✅ CORS configuration for React frontend
+- ✅ Stateless authentication
+- ✅ Production-ready security
 
-## Building the project
-You can use the SAM CLI to quickly build the project
+## Prerequisites
+
+- Java 17+
+- Maven 3.6+
+- AWS Cognito User Pool configured
+
+## Configuration
+
+### Environment Variables
+
+Create `.env` file or set environment variables:
+
 ```bash
-$ mvn archetype:generate -DartifactId=aws-lamda -DarchetypeGroupId=com.amazonaws.serverless.archetypes -DarchetypeArtifactId=aws-serverless-jersey-archetype -DarchetypeVersion=2.1.5 -DgroupId=org.example -Dversion=1.0-SNAPSHOT -Dinteractive=false
-$ cd aws-lamda
-$ sam build
-Building resource 'AwsLamdaFunction'
-Running JavaGradleWorkflow:GradleBuild
-Running JavaGradleWorkflow:CopyArtifacts
-
-Build Succeeded
-
-Built Artifacts  : .aws-sam/build
-Built Template   : .aws-sam/build/template.yaml
-
-Commands you can use next
-=========================
-[*] Invoke Function: sam local invoke
-[*] Deploy: sam deploy --guided
+AWS_REGION=us-east-1
+COGNITO_USER_POOL_ID=us-east-1_XXXXXXXXX
+COGNITO_CLIENT_ID=7xxxxxxxxxxxxxxxxxxxxxx
+FRONTEND_URL=http://localhost:3000
 ```
 
-## Testing locally with the SAM CLI
+### application.properties
 
-From the project root folder - where the `template.yml` file is located - start the API with the SAM CLI.
+Located at `src/main/resources/application.properties`:
 
-```bash
-$ sam local start-api
-
-...
-Mounting com.amazonaws.serverless.archetypes.StreamLambdaHandler::handleRequest (java11) at http://127.0.0.1:3000/{proxy+} [OPTIONS GET HEAD POST PUT DELETE PATCH]
-...
+```properties
+spring.security.oauth2.resourceserver.jwt.issuer-uri=https://cognito-idp.${aws.cognito.region}.amazonaws.com/${aws.cognito.userPoolId}
+spring.security.oauth2.resourceserver.jwt.jwk-set-uri=https://cognito-idp.${aws.cognito.region}.amazonaws.com/${aws.cognito.userPoolId}/.well-known/jwks.json
 ```
 
-Using a new shell, you can send a test ping request to your API:
+## Build and Run
+
+### Development
 
 ```bash
-$ curl -s http://127.0.0.1:3000/ping | python -m json.tool
+# Build
+mvn clean install
 
-{
-    "pong": "Hello, World!"
+# Run
+mvn spring-boot:run
+
+# Run with environment variables
+AWS_REGION=us-east-1 \
+COGNITO_USER_POOL_ID=us-east-1_XXXXXXXXX \
+COGNITO_CLIENT_ID=7xxxxxxxxxxxxxxxxxxxxxx \
+mvn spring-boot:run
+```
+
+### Production
+
+```bash
+# Build JAR
+mvn clean package
+
+# Run JAR
+java -jar target/aws-lamda-1.0-SNAPSHOT.jar
+```
+
+## API Endpoints
+
+### Public Endpoints
+
+```bash
+GET /health          # Health check
+GET /ping            # Ping endpoint
+```
+
+### Protected Endpoints (Requires JWT)
+
+```bash
+GET /api/profile     # Get authenticated user profile
+POST /api/data       # Create data (authenticated users)
+```
+
+### Role-Based Endpoints
+
+```bash
+GET /api/user/data   # Requires User or Admin group
+GET /api/admin/data  # Requires Admin group only
+```
+
+## Security Configuration
+
+### JWT Validation
+
+The application validates JWT tokens from AWS Cognito:
+
+1. Extracts token from `Authorization: Bearer <token>` header
+2. Validates signature using JWKS from Cognito
+3. Verifies issuer matches User Pool
+4. Checks token expiration
+
+### Role-Based Access Control
+
+Uses `@PreAuthorize` annotation:
+
+```java
+@PreAuthorize("hasAuthority('SCOPE_Admin')")
+public Map<String, String> getAdminData() {
+    // Admin only logic
 }
-``` 
-
-## Deploying to AWS
-To deploy the application in your AWS account, you can use the SAM CLI's guided deployment process and follow the instructions on the screen
-
-```
-$ sam deploy --guided
 ```
 
-Once the deployment is completed, the SAM CLI will print out the stack's outputs, including the new application URL. You can use `curl` or a web browser to make a call to the URL
+Cognito groups are mapped to Spring Security authorities as `SCOPE_<GroupName>`.
 
-```
-...
--------------------------------------------------------------------------------------------------------------
-OutputKey-Description                        OutputValue
--------------------------------------------------------------------------------------------------------------
-AwsLamdaApi - URL for application            https://xxxxxxxxxx.execute-api.us-west-2.amazonaws.com/Prod/pets
--------------------------------------------------------------------------------------------------------------
-```
+## Testing
 
-Copy the `OutputValue` into a browser or use curl to test your first request:
+### Test with cURL
 
 ```bash
-$ curl -s https://xxxxxxx.execute-api.us-west-2.amazonaws.com/Prod/ping | python -m json.tool
+# Get JWT token from frontend after login
+TOKEN="eyJraWQiOiJ..."
 
-{
-    "pong": "Hello, World!"
+# Test profile endpoint
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/profile
+
+# Test admin endpoint
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/admin/data
+```
+
+### Test with Postman
+
+1. Set request type: GET
+2. URL: `http://localhost:8080/api/profile`
+3. Headers:
+   - Key: `Authorization`
+   - Value: `Bearer <your-jwt-token>`
+4. Send request
+
+## Adding New Protected Endpoints
+
+### Example: Create New Endpoint
+
+```java
+@RestController
+@RequestMapping("/api")
+public class MyController {
+
+    @GetMapping("/my-endpoint")
+    public Map<String, String> myEndpoint(@AuthenticationPrincipal Jwt jwt) {
+        String username = jwt.getClaim("cognito:username");
+        String email = jwt.getClaim("email");
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Success");
+        response.put("user", username);
+        return response;
+    }
+
+    @PostMapping("/admin/create")
+    @PreAuthorize("hasAuthority('SCOPE_Admin')")
+    public Map<String, String> adminCreate(@RequestBody Map<String, Object> data) {
+        // Admin only logic
+        return Map.of("status", "created");
+    }
 }
 ```
+
+## CORS Configuration
+
+CORS is configured in `SecurityConfig.java`:
+
+```java
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(Arrays.asList("*"));
+    configuration.setAllowCredentials(true);
+    return source;
+}
+```
+
+## Deployment
+
+### Docker
+
+```dockerfile
+FROM openjdk:17-slim
+WORKDIR /app
+COPY target/aws-lamda-1.0-SNAPSHOT.jar app.jar
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar"]
+```
+
+### AWS Elastic Beanstalk
+
+```bash
+# Create application
+eb init -p java-17 podiweda-backend
+
+# Deploy
+eb create podiweda-backend-env
+eb deploy
+```
+
+### AWS ECS
+
+1. Build Docker image
+2. Push to ECR
+3. Create ECS task definition
+4. Deploy to ECS cluster
+
+## Troubleshooting
+
+### JWT Validation Fails
+
+**Check:**
+- User Pool ID is correct
+- Token hasn't expired
+- JWKS endpoint is accessible
+- Issuer URI matches User Pool
+
+### CORS Errors
+
+**Check:**
+- Frontend URL in `FRONTEND_URL` environment variable
+- CORS configuration in `SecurityConfig.java`
+- Preflight OPTIONS requests are allowed
+
+### 403 Forbidden
+
+**Check:**
+- User is in correct Cognito group
+- JWT contains `cognito:groups` claim
+- `@PreAuthorize` annotation uses correct authority
+
+## Dependencies
+
+Key dependencies in `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+</dependency>
+```
+
+## License
+
+MIT
