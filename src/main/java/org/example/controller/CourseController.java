@@ -31,14 +31,14 @@ public class CourseController {
     }
 
     @GetMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Course> getCourseById(@PathVariable int id) {
+    public ResponseEntity<Course> getCourseById(@PathVariable String id) {
         Optional<Course> course = courseService.getCourseById(id);
         return course.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @PutMapping(value = "/{id}", produces = "application/json", consumes = "application/json")
-    public ResponseEntity<Course> updateCourse(@PathVariable int id, @RequestBody Course newCourse) {
+    public ResponseEntity<Course> updateCourse(@PathVariable String id, @RequestBody Course newCourse) {
         boolean updated = courseService.updateCourse(id, newCourse);
         if (updated) {
             return new ResponseEntity<>(newCourse, HttpStatus.OK);
@@ -48,7 +48,7 @@ public class CourseController {
     }
 
     @DeleteMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Void> deleteCourse(@PathVariable int id) {
+    public ResponseEntity<Void> deleteCourse(@PathVariable String id) {
         boolean deleted = courseService.deleteCourse(id);
         if (deleted) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
