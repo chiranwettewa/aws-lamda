@@ -29,10 +29,15 @@ Resources:
       Environment:
         Variables:
           DYNAMODB_TABLE_NAME: !Ref CoursesTable
+          COGNITO_USER_POOL_ID: us-east-1_rgmySCRYv
+          COGNITO_CLIENT_ID: 2si8lnltd4fessjnv7pca233b8
+          FRONTEND_URL: "https://podiweda.com,https://www.podiweda.com"
       Policies:
         - AWSLambdaBasicExecutionRole
         - DynamoDBCrudPolicy:
             TableName: !Ref CoursesTable
+        - DynamoDBCrudPolicy:
+            TableName: Tasks
       Events:
         ProxyResource:
           Type: Api
