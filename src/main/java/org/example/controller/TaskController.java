@@ -25,7 +25,7 @@ public class TaskController {
 
     @PostMapping
     public ResponseEntity<Task> createTask(@RequestBody Task task, Authentication authentication) {
-        log.info("Creating task for user");
+        log.info("Creating task for user.");
         String userId = getUserIdFromAuth(authentication);
         task.setUserId(userId);
         Task createdTask = taskService.createTask(task);
