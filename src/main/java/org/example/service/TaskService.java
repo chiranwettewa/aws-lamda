@@ -25,6 +25,10 @@ public class TaskService {
         return taskRepository.findByUserId(userId);
     }
 
+    public List<Task> getAllTasks() {
+        return taskRepository.findAll();
+    }
+
     public Task getTaskById(String id, String userId) {
         return taskRepository.findById(userId, id);
     }

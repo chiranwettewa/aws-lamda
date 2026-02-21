@@ -43,6 +43,14 @@ public class TaskController {
         return ResponseEntity.ok(tasks);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<Task>> getAllPublicTasks() {
+        log.info("Fetching all public tasks");
+        List<Task> tasks = taskService.getAllTasks();
+        log.info("Found {} public tasks", tasks.size());
+        return ResponseEntity.ok(tasks);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable String id, Authentication authentication) {
         log.info("Fetching task: {}", id);

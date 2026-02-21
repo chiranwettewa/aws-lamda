@@ -45,6 +45,13 @@ public class TaskRepository {
                 .collect(Collectors.toList());
     }
 
+    public List<Task> findAll() {
+        return taskTable.scan()
+                .items()
+                .stream()
+                .collect(Collectors.toList());
+    }
+
     public void delete(String userId, String id) {
         Key key = Key.builder()
                 .partitionValue(userId)

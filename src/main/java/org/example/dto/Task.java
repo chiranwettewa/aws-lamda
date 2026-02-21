@@ -13,7 +13,9 @@ public class Task {
     private String title;
     private String description;
     private String category;
-    private String location;
+    private String district;
+    private String city;
+    private String address;
     private String phoneNumber;
     private String taskType;
     private Double budget;
@@ -43,8 +45,14 @@ public class Task {
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
 
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
+    public String getDistrict() { return district; }
+    public void setDistrict(String district) { this.district = district; }
+
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
