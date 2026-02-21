@@ -29,8 +29,8 @@ Resources:
       Environment:
         Variables:
           DYNAMODB_TABLE_NAME: !Ref CoursesTable
-          COGNITO_USER_POOL_ID: us-east-1_rgmySCRYv
-          COGNITO_CLIENT_ID: 2si8lnltd4fessjnv7pca233b8
+          COGNITO_USER_POOL_ID: us-east-1_x2cp3uOn9
+          COGNITO_CLIENT_ID: 49pajvflttmrub5glgeed22bd3
           FRONTEND_URL: "https://podiweda.com,https://www.podiweda.com"
       Policies:
         - AWSLambdaBasicExecutionRole
