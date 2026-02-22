@@ -10,7 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = {"https://podiweda.com", "https://www.podiweda.com"}, allowCredentials = "true")
+@CrossOrigin(origins = {"http://localhost:3000", "https://podiweda.com", "https://www.podiweda.com"}, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/profile")
 public class UserProfileController {

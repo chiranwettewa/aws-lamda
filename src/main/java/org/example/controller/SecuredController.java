@@ -12,16 +12,6 @@ import java.util.Map;
 @RequestMapping("/api")
 public class SecuredController {
 
-    @GetMapping("/profile")
-    public Map<String, Object> getProfile(@AuthenticationPrincipal Jwt jwt) {
-        Map<String, Object> profile = new HashMap<>();
-        profile.put("username", jwt.getClaim("cognito:username"));
-        profile.put("email", jwt.getClaim("email"));
-        profile.put("sub", jwt.getSubject());
-        profile.put("groups", jwt.getClaim("cognito:groups"));
-        return profile;
-    }
-
     @GetMapping("/user/data")
     @PreAuthorize("hasAuthority('SCOPE_User') or hasAuthority('SCOPE_Admin')")
     public Map<String, String> getUserData(@AuthenticationPrincipal Jwt jwt) {
